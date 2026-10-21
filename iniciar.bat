@@ -3,7 +3,7 @@ cd /d "%~dp0"
 
 rem Se o app ja estiver rodando, so abre o navegador
 netstat -ano | findstr /R /C:"127.0.0.1:8000 .*LISTENING" >nul && (
-    echo Clips IA ja esta aberto. Abrindo o navegador...
+    echo Documentarios IA ja esta aberto. Abrindo o navegador...
     start "" http://127.0.0.1:8000
     exit /b
 )

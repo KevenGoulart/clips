@@ -1,0 +1,8 @@
+# Ambiente separado da narração (.venv-tts): o Chatterbox fixa torch 2.6 e numpy 1.x.
+# Instale antes o torch com CUDA:
+#   .venv-tts\Scripts\pip install torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+chatterbox-tts==0.1.7
+# conferência da narração e tempo das palavras das legendas (o modelo large-v3-turbo baixa na primeira vez)
+faster-whisper==1.2.1
+# o loader da V3 multilíngue (e do fine-tune pt-BR) ainda não saiu no PyPI: código do GitHub, sem trocar as dependências
+#   .venv-tts\Scripts\pip install --no-deps "chatterbox-tts @ git+https://github.com/resemble-ai/chatterbox.git@5de7a54aa4"

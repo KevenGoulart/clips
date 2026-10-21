@@ -1,4 +1,4 @@
-"""Envio dos cortes para o YouTube via YouTube Data API v3 (OAuth)."""
+"""Envio dos vídeos para o YouTube via YouTube Data API v3 (OAuth)."""
 import re
 import threading
 from pathlib import Path
@@ -51,7 +51,7 @@ def login():
     with _lock:
         flow = InstalledAppFlow.from_client_secrets_file(str(secret), SCOPES)
         creds = flow.run_local_server(port=0, open_browser=True, prompt="consent",
-                                      success_message="Conectado! Pode fechar esta aba e voltar ao Clips IA.")
+                                      success_message="Conectado! Pode fechar esta aba e voltar ao app.")
         TOKEN_FILE.write_text(creds.to_json(), encoding="utf-8")
 
 
@@ -83,7 +83,7 @@ def status() -> dict:
 
 
 def _clean_title(title: str) -> str:
-    title = re.sub(r"[<>]", "", title).strip() or "Corte"
+    title = re.sub(r"[<>]", "", title).strip() or "Documentário"
     return title[:100]  # limite do YouTube
 
 
@@ -93,7 +93,7 @@ def upload(path: Path, title: str, description: str, on_progress=None) -> str:
     from googleapiclient.http import MediaFileUpload
 
     body = {
-        "snippet": {"title": _clean_title(title), "description": description[:5000], "categoryId": "22"},
+        "snippet": {"title": _clean_title(title), "description": description[:5000], "categoryId": "27"},
         "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False},
     }
     media = MediaFileUpload(str(path), mimetype="video/mp4", chunksize=8 * 1024 * 1024, resumable=True)
@@ -114,4 +114,19 @@ def upload(path: Path, title: str, description: str, on_progress=None) -> str:
         raise RuntimeError(reason) from None
     if on_progress:
         on_progress(100)
-    return f"https://youtube.com/shorts/{response['id']}"
+    return f"https://youtu.be/{response['id']}"
+
+
+def set_thumbnail(video_url: str, image: Path):
+    """Troca a miniatura do vídeo já enviado. Exige canal verificado por telefone."""
+    from googleapiclient.errors import HttpError
+    from googleapiclient.http import MediaFileUpload
+
+    video_id = video_url.rstrip("/").rsplit("/", 1)[-1]
+    try:
+        _service().thumbnails().set(videoId=video_id, media_body=MediaFileUpload(str(image), mimetype="image/jpeg")).execute()
+    except HttpError as e:
+        if e.resp.status == 403:
+            raise RuntimeError("o canal precisa estar verificado para usar miniaturas personalizadas "
+                               "(youtube.com/verify)") from None
+        raise RuntimeError(e.reason or str(e)) from None

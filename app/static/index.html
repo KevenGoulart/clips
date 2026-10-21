@@ -3,274 +3,426 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Clips IA</title>
+<title>Documentários IA</title>
 <style>
-  :root { --bg:#0e0f13; --card:#181a21; --line:#2a2d38; --text:#eceef4; --muted:#8b90a0; --accent:#ffd400; --err:#ff6b6b; }
+  :root { --bg:#0e0f13; --card:#181a21; --line:#2a2d38; --text:#eceef4; --muted:#8b90a0; --accent:#f2b134; --err:#ff6b6b; --ok:#3ddc84; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 system-ui, "Segoe UI", sans-serif; }
   main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
   h1 { margin:0 0 4px; font-size: 28px; }
   h1 span { color: var(--accent); }
+  h2 { font-size:17px; margin:28px 0 10px; }
   .sub { color: var(--muted); margin: 0 0 24px; }
-  form { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; display:grid; gap:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; display:grid; gap:16px; }
   .row { display:flex; gap:12px; flex-wrap:wrap; }
   .row > label { flex:1 1 160px; }
   label { display:grid; gap:6px; color:var(--muted); font-size:13px; }
-  input, select { background:#0f1116; border:1px solid var(--line); color:var(--text); border-radius:10px; padding:11px 12px; font:inherit; width:100%; }
-  input:focus, select:focus { outline:2px solid var(--accent); outline-offset:-1px; }
+  input, select, textarea { background:#0f1116; border:1px solid var(--line); color:var(--text); border-radius:10px; padding:11px 12px; font:inherit; width:100%; }
+  textarea { resize:vertical; }
+  input:focus, select:focus, textarea:focus { outline:2px solid var(--accent); outline-offset:-1px; }
   .check { display:flex; align-items:center; gap:8px; color:var(--text); font-size:14px; }
   .check input { width:auto; }
-  button { background:var(--accent); color:#000; border:0; border-radius:10px; padding:13px 18px; font:600 15px system-ui; cursor:pointer; }
+  button { background:var(--accent); color:#000; border:0; border-radius:10px; padding:12px 18px; font:600 14px system-ui; cursor:pointer; }
   button:disabled { opacity:.5; cursor:wait; }
-  #status { margin-top:20px; display:none; }
+  button.ghost { background:#262935; color:var(--text); font-weight:500; }
+  button.danger { background:#3a1d22; color:var(--err); font-weight:500; }
+  .tabs { display:flex; gap:6px; }
+  .tabs button { background:#262935; color:var(--muted); font-weight:500; padding:8px 14px; }
+  .tabs button.on { background:var(--accent); color:#000; font-weight:600; }
+  .bar-top { display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 16px; margin-bottom:12px; font-size:14px; }
+  .bar-top .dot { width:9px; height:9px; border-radius:50%; background:var(--muted); }
+  .bar-top .dot.on { background:var(--ok); }
+  .bar-top span { flex:1; }
+  .bar-top button { padding:8px 14px; font-size:13px; }
+  details.card { padding:12px 16px; }
+  details summary { cursor:pointer; color:var(--muted); font-size:14px; }
+  .hint { color:var(--muted); font-size:12.5px; margin:0; }
+  .hint code { color:var(--text); }
+  .ideas { display:flex; flex-wrap:wrap; gap:6px; }
+  .ideas button { background:#262935; color:var(--muted); font-weight:500; font-size:12.5px; padding:6px 11px; border-radius:999px; }
+  .ideas button:hover { color:var(--text); }
+  .list { display:grid; gap:6px; }
+  .item { display:flex; gap:12px; align-items:center; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 14px; cursor:pointer; }
+  .item:hover, .item.on { border-color:var(--accent); }
+  .item b { flex:1; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .item small { color:var(--muted); }
+  .badge { font-size:12px; padding:2px 8px; border-radius:20px; background:#262935; color:var(--muted); white-space:nowrap; }
+  .badge.done { background:#123222; color:var(--ok); }
+  .badge.error, .badge.error_write { background:#3a1d22; color:var(--err); }
+  .badge.busy { background:#3a2e12; color:var(--accent); }
+  #detail { margin-top:16px; display:none; }
   #log { background:#0a0b0e; border:1px solid var(--line); border-radius:10px; padding:12px; font:12.5px/1.6 Consolas, monospace; color:var(--muted); max-height:220px; overflow:auto; white-space:pre-wrap; }
   #log .err { color: var(--err); }
-  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:16px; margin-top:20px; }
-  .clip { background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; }
-  .clip video { width:100%; aspect-ratio:9/16; background:#000; display:block; }
-  .clip .body { padding:12px; display:grid; gap:6px; }
-  .clip h3 { margin:0; font-size:15px; }
-  .meta { color:var(--muted); font-size:12.5px; }
-  .desc { font-size:13px; background:#0f1116; border-radius:8px; padding:8px; white-space:pre-wrap; }
-  .actions { display:flex; gap:8px; }
-  .actions a, .actions button { flex:1; text-align:center; text-decoration:none; font-size:13px; padding:9px; border-radius:8px; }
-  .actions a { background:var(--accent); color:#000; font-weight:600; }
-  .actions button { background:#262935; color:var(--text); font-weight:500; }
-  .spinner { display:inline-block; width:12px; height:12px; border:2px solid var(--muted); border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite; vertical-align:-1px; margin-right:6px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .yt { display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 16px; margin-bottom:16px; font-size:14px; }
-  .yt .dot { width:9px; height:9px; border-radius:50%; background:var(--muted); }
-  .yt .dot.on { background:#3ddc84; }
-  .yt span { flex:1; }
-  .yt button { padding:8px 14px; font-size:13px; }
-  .yt button.ghost { background:#262935; color:var(--text); }
-  .yt button.danger { background:#3a1d22; color:var(--err); }
-  .storage { margin:16px 0 0; color:var(--muted); }
-  .clip input, .clip textarea, .clip select { font-size:13px; padding:8px; border-radius:8px; }
-  .clip textarea { background:#0f1116; border:1px solid var(--line); color:var(--text); font:inherit; font-size:13px; padding:8px; border-radius:8px; width:100%; resize:vertical; min-height:64px; }
-  .publish { display:grid; gap:6px; border-top:1px solid var(--line); padding-top:10px; margin-top:4px; }
-  .publish button { padding:9px; font-size:13px; background:#ff0033; color:#fff; }
+  #script { font:14px/1.6 Georgia, serif; min-height:360px; }
+  video { width:100%; border-radius:10px; background:#000; display:block; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .actions > * { flex:1 1 140px; text-align:center; text-decoration:none; }
+  .actions a { background:var(--accent); color:#000; font-weight:600; border-radius:10px; padding:12px; font-size:14px; }
+  .publish button { background:#ff0033; color:#fff; }
   .up { font-size:12.5px; color:var(--muted); }
   .up a { color:var(--accent); }
   .up.err { color:var(--err); }
-  .bar { height:4px; background:#262935; border-radius:2px; overflow:hidden; }
-  .bar i { display:block; height:100%; background:#ff0033; transition:width .3s; }
+  .progress { height:4px; background:#262935; border-radius:2px; overflow:hidden; }
+  .progress i { display:block; height:100%; background:#ff0033; transition:width .3s; }
+  .steps { display:grid; gap:8px; }
+  .steps ol { display:flex; flex-wrap:wrap; gap:6px; list-style:none; margin:0; padding:0; }
+  .steps li { font-size:12.5px; padding:4px 10px; border-radius:999px; background:#262935; color:var(--muted); }
+  .steps li.done { background:#123222; color:var(--ok); }
+  .steps li.now { background:#3a2e12; color:var(--accent); font-weight:600; }
+  .steps .meta { display:flex; justify-content:space-between; gap:12px; font-size:13px; color:var(--text); }
+  .steps .meta span:last-child { color:var(--muted); white-space:nowrap; }
+  .steps .progress { height:6px; border-radius:3px; }
+  .steps .progress i { background:var(--accent); }
+  .spinner { display:inline-block; width:12px; height:12px; border:2px solid var(--muted); border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite; vertical-align:-1px; margin-right:6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 <main>
-  <h1>Clips <span>IA</span></h1>
-  <p class="sub">Cole um link do YouTube. A IA encontra os melhores momentos e entrega cortes verticais 9:16 com título e legenda.</p>
+  <h1>Documentários <span>IA</span></h1>
+  <p class="sub">Dê um tema (a história de um país, uma figura histórica, um crime famoso, uma curiosidade, um assunto de ciência) ou cole um roteiro. A IA escreve, busca imagens e vídeos, narra com voz natural e anima tudo em um vídeo longo.</p>
 
-  <div class="yt">
+  <div class="bar-top">
     <i class="dot" id="ytDot"></i>
     <span id="ytText">Verificando conexão com o YouTube...</span>
     <button type="button" id="ytBtn" style="display:none"></button>
   </div>
 
-  <form id="form">
-    <label>Link do YouTube
-      <input id="url" type="url" placeholder="https://www.youtube.com/watch?v=..." required>
+  <details class="card" id="cfg">
+    <summary id="cfgSummary">Configurações: chaves de imagens e vozes</summary>
+    <div style="display:grid; gap:12px; margin-top:12px">
+      <p class="hint">Sem chave, as imagens vêm só do Wikimedia Commons (ótimo para história). Com as chaves gratuitas do
+        <a href="https://www.pexels.com/api/" target="_blank" style="color:var(--accent)">Pexels</a> e do
+        <a href="https://pixabay.com/api/docs/" target="_blank" style="color:var(--accent)">Pixabay</a> entram também vídeos de banco de imagens.</p>
+      <div class="row">
+        <label>Chave do Pexels <input id="pexels" type="password" placeholder="(não configurada)"></label>
+        <label>Chave do Pixabay <input id="pixabay" type="password" placeholder="(não configurada)"></label>
+      </div>
+      <button type="button" id="saveKeys" class="ghost" style="justify-self:start">Salvar chaves</button>
+      <p class="hint">Vozes: coloque um <code>.wav</code> de ~10 s de alguém falando, limpo e sem música, na pasta <code>vozes/</code>; o narrador imita essa voz.
+        Trilhas de fundo vão em <code>musica/</code>. Vídeos prontos (como os exportados do Claude Motion) vão em <code>clipes/</code> e entram no roteiro com uma linha <code>[clipe: nome.mp4]</code>.</p>
+    </div>
+  </details>
+
+  <h2>Novo documentário</h2>
+  <form id="form" class="card">
+    <div class="tabs"><button type="button" class="on" data-tab="topic">A IA escreve</button><button type="button" data-tab="script">Tenho o roteiro</button></div>
+    <label id="topicBox">Tema
+      <input id="topic" placeholder="Ex.: A história do Japão, de shogunato a potência mundial" maxlength="300">
+      <div class="ideas" id="ideas"></div>
+    </label>
+    <label id="scriptBox" style="display:none">Roteiro
+      <textarea id="scriptIn" rows="10" placeholder="# Título do vídeo&#10;&#10;## Capítulo 1&#10;Texto da narração...&#10;&#10;## Capítulo 2&#10;..."></textarea>
     </label>
     <div class="row">
-      <label>Duração máxima
-        <select id="duration"><option value="30">Até 30 segundos</option><option value="60" selected>Até 1 minuto</option></select>
+      <label id="minBox">Duração aproximada
+        <select id="minutes"><option value="0">A IA decide</option><option value="5">~5 minutos</option><option value="10" selected>~10 minutos</option><option value="15">~15 minutos</option><option value="20">~20 minutos</option><option value="30">~30 minutos</option></select>
       </label>
-      <label>Quantidade de cortes
-        <select id="count"><option>1</option><option>2</option><option>3</option><option>5</option><option>8</option><option>10</option><option>15</option><option selected>20</option></select>
+      <label>Idioma
+        <select id="language"><option value="pt" selected>Português</option><option value="en">Inglês</option></select>
       </label>
-      <label>Enquadramento
-        <select id="crop_mode">
-          <option value="auto">Automático</option>
-          <option value="crop">Seguir rosto (corte)</option>
-          <option value="blur">Vídeo inteiro + fundo desfocado</option>
-        </select>
+      <label>Voz do narrador
+        <select id="voice"></select>
       </label>
-      <label>Idioma do vídeo
-        <select id="language"><option value="">Detectar</option><option value="pt" selected>Português</option><option value="en">Inglês</option><option value="es">Espanhol</option></select>
+      <label>Formato
+        <select id="format"><option value="horizontal" selected>Horizontal 16:9</option><option value="vertical">Vertical 9:16</option></select>
       </label>
     </div>
-    <label class="check"><input id="subtitles" type="checkbox" checked> Legendas animadas palavra por palavra</label>
-    <label class="check"><input id="auto_upload" type="checkbox"> Publicar automaticamente no YouTube ao terminar</label>
-    <button id="go" type="submit">Gerar cortes</button>
+    <label id="styleBox">Estilo (opcional)
+      <input id="style" placeholder="Ex.: dramático e com suspense; leve e curioso; tom de true crime" maxlength="200">
+    </label>
+    <label class="check"><input id="review" type="checkbox" checked> Parar para eu revisar o roteiro antes de produzir</label>
+    <label class="check"><input id="captions" type="checkbox" checked> Legendas palavra por palavra</label>
+    <label class="check"><input id="auto_upload" type="checkbox"> Publicar no YouTube ao terminar</label>
+    <button id="go" type="submit">Criar documentário</button>
   </form>
 
-  <div class="yt storage">
+  <h2>Projetos</h2>
+  <div class="bar-top">
     <span id="stText">Calculando espaço usado...</span>
-    <button type="button" id="stBtn" class="danger">Apagar todos</button>
   </div>
+  <div id="list" class="list"></div>
 
-  <section id="status">
-    <p id="state" class="meta"></p>
+  <section id="detail" class="card">
+    <div class="row" style="align-items:center">
+      <h3 id="dTitle" style="margin:0; flex:1"></h3>
+      <span id="dBadge" class="badge"></span>
+    </div>
+    <div id="steps" class="steps"></div>
     <div id="log"></div>
-    <div id="clips" class="grid"></div>
+    <div id="result"></div>
+    <label><span>Roteiro (edite à vontade: <code># título</code>, <code>## capítulo</code>, parágrafos separados por linha em branco; confira os fatos antes de produzir)</span>
+      <textarea id="script"></textarea>
+    </label>
+    <div class="row">
+      <label>Voz do narrador <select id="dVoice"></select></label>
+      <label>Formato <select id="dFormat"><option value="horizontal">Horizontal 16:9</option><option value="vertical">Vertical 9:16</option></select></label>
+    </div>
+    <label class="check"><input id="dCaptions" type="checkbox"> Legendas palavra por palavra</label>
+    <div class="actions">
+      <button type="button" id="produce">Produzir vídeo</button>
+      <button type="button" id="save" class="ghost">Salvar alterações</button>
+      <button type="button" id="rewrite" class="ghost">Reescrever com a IA</button>
+      <button type="button" id="del" class="danger">Apagar projeto</button>
+    </div>
   </section>
 </main>
 
 <script>
 const $ = id => document.getElementById(id);
-let timer;
+const BUSY = ["queued_write", "writing", "queued_produce", "producing"];
+const LABEL = { queued_write: "na fila", writing: "escrevendo", script_ready: "roteiro pronto", queued_produce: "na fila",
+                producing: "produzindo", done: "pronto", error: "erro", error_write: "erro" };
+let mode = "topic", current = null, project = null, dirty = false, timer = null, renderedResult = null;
 
-$("form").addEventListener("submit", async e => {
+async function api(path, opts = {}) {
+  const r = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.detail ? (typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail)) : "Erro");
+  return data;
+}
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const badgeClass = s => BUSY.includes(s) ? "busy" : s;
+
+// ---------------------------------------------------------------- formulário
+// sugestões de tema embaixo do campo: 6 sorteadas a cada vez que a página abre
+const IDEAS = [
+  "A queda do Império Romano", "Al Capone e a Lei Seca em Chicago", "O naufrágio do Titanic",
+  "A corrida espacial entre EUA e URSS", "Chernobyl: o pior acidente nuclear da história", "A construção das pirâmides do Egito",
+  "Genghis Khan e o Império Mongol", "A Revolução Francesa", "O desaparecimento do voo MH370",
+  "Pablo Escobar e o cartel de Medellín", "A Peste Negra na Europa medieval", "A história da Coca-Cola",
+  "O Muro de Berlim, da construção à queda", "Os samurais e o Japão feudal", "A Guerra do Paraguai",
+  "Napoleão Bonaparte", "A chegada do homem à Lua", "A história do Bitcoin",
+];
+$("ideas").innerHTML = IDEAS.map(t => [Math.random(), t]).sort((a, b) => a[0] - b[0]).slice(0, 6)
+  .map(([, t]) => `<button type="button">${esc(t)}</button>`).join("");
+$("ideas").onclick = e => {
+  if (e.target.tagName !== "BUTTON") return;
   e.preventDefault();
-  $("go").disabled = true;
-  $("clips").innerHTML = "";
-  $("status").style.display = "block";
-  const body = {
-    url: $("url").value.trim(),
-    duration: +$("duration").value,
-    count: +$("count").value,
-    crop_mode: $("crop_mode").value,
-    subtitles: $("subtitles").checked,
-    language: $("language").value || null,
-    auto_upload: $("auto_upload").checked,
-  };
-  rendered = null;
-  try {
-    const r = await fetch("/api/jobs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const job = await r.json();
-    if (!r.ok) throw new Error(job.detail || "Erro ao criar job");
-    poll(job.id);
-  } catch (err) {
-    render({ status: "error", log: [String(err.message || err)], clips: [] });
-    $("go").disabled = false;
-  }
+  $("topic").value = e.target.textContent;
+  $("topic").focus();
+};
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  mode = b.dataset.tab;
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+  $("topicBox").style.display = $("minBox").style.display = $("styleBox").style.display = mode === "topic" ? "" : "none";
+  $("scriptBox").style.display = mode === "script" ? "" : "none";
 });
 
-let rendered = null, currentJob = null;
+$("form").onsubmit = async e => {
+  e.preventDefault();
+  $("go").disabled = true;
+  try {
+    const p = await api("/api/projects", { method: "POST", body: JSON.stringify({
+      topic: mode === "topic" ? $("topic").value.trim() : "",
+      script: mode === "script" ? $("scriptIn").value : "",
+      minutes: +$("minutes").value, language: $("language").value, style: $("style").value,
+      voice: $("voice").value, format: $("format").value, captions: $("captions").checked,
+      review: $("review").checked, auto_upload: $("auto_upload").checked,
+    }) });
+    $("topic").value = ""; $("scriptIn").value = "";
+    await loadList();
+    open(p.id);
+  } catch (err) { alert(err.message); }
+  $("go").disabled = false;
+};
 
-function poll(id) {
-  clearTimeout(timer);
-  fetch(`/api/jobs/${id}`).then(r => r.json()).then(job => {
-    currentJob = job;
-    render(job);
-    const busy = job.status === "queued" || job.status === "running";
-    const uploading = Object.values(job.uploads || {}).some(u => u.state === "queued" || u.state === "uploading");
-    if (!busy) { $("go").disabled = false; stRefresh(); }
-    if (busy || uploading) timer = setTimeout(() => poll(id), 1500);
-  }).catch(() => { timer = setTimeout(() => poll(id), 3000); });
+// ---------------------------------------------------------------- lista
+async function loadList() {
+  const items = await api("/api/projects");
+  $("list").innerHTML = items.length ? items.map(p => `
+    <div class="item ${p.id === current ? "on" : ""}" data-id="${p.id}">
+      <b>${esc(p.title || "(sem título)")}</b><small>${p.created.replace("T", " ").slice(0, 16)}</small>
+      <span class="badge ${badgeClass(p.status)}">${BUSY.includes(p.status) ? '<i class="spinner"></i>' : ""}${LABEL[p.status] || p.status}</span>
+    </div>`).join("") : '<p class="hint">Nenhum projeto ainda.</p>';
+  document.querySelectorAll(".item").forEach(el => el.onclick = () => open(el.dataset.id));
+  const st = await api("/api/storage");
+  $("stText").textContent = `${st.projects} projeto(s) · ${(st.bytes / 1e9).toFixed(2)} GB em output/`;
 }
 
-// ------------------------------------------------------------------ YouTube
-let ytConnected = false;
+// ---------------------------------------------------------------- projeto
+function open(id) {
+  if (dirty && current !== id && !confirm("Descartar as alterações não salvas no roteiro?")) return;
+  current = id; dirty = false; renderedResult = null; project = null;
+  $("detail").style.display = "grid";
+  clearTimeout(timer);
+  poll();
+  loadList();
+  $("detail").scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
-async function ytRefresh() {
-  const s = await fetch("/api/youtube/status").then(r => r.json()).catch(() => ({}));
+async function poll() {
+  if (!current) return;
+  const id = current;
+  let p;
+  try { p = await api(`/api/projects/${id}`); } catch { return; }
+  if (id !== current) return;
+  const changedStatus = !project || project.status !== p.status;
+  project = p;
+  const busy = BUSY.includes(p.status);
+  $("dTitle").textContent = (p.result && p.result.title) || (p.script || "").match(/^#\s+(.+)$/m)?.[1] || p.title || "(sem título)";
+  $("dBadge").className = "badge " + badgeClass(p.status);
+  $("dBadge").innerHTML = (busy ? '<i class="spinner"></i>' : "") + (LABEL[p.status] || p.status);
+  const log = $("log");
+  const atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 20;
+  log.innerHTML = p.log.map(l => `<div class="${l.includes("ERRO") ? "err" : ""}">${esc(l)}</div>`).join("");
+  if (atBottom) log.scrollTop = log.scrollHeight;
+  if (!dirty) {
+    $("script").value = p.script || "";
+    $("dVoice").value = p.voice || "";
+    $("dFormat").value = p.format;
+    $("dCaptions").checked = p.captions;
+  }
+  ["script", "dVoice", "dFormat", "dCaptions", "save"].forEach(k => $(k).disabled = busy);
+  $("produce").disabled = busy || !(p.script || "").trim();
+  $("produce").textContent = p.status === "done" ? "Produzir de novo" : p.status === "error" ? "Retomar produção" : "Produzir vídeo";
+  $("rewrite").style.display = p.topic ? "" : "none";
+  $("rewrite").disabled = busy;
+  $("del").disabled = busy;
+  renderSteps(p);
+  renderResult(p);
+  if (changedStatus) loadList();
+  timer = setTimeout(poll, busy || (p.uploads && ["queued", "uploading"].includes(p.uploads.state)) ? 2000 : 8000);
+}
+
+// etapas de cada tarefa (os nomes batem com o step= que o pipeline manda no log)
+const STEPS = {
+  write: [["pesquisa", "Pesquisa"], ["roteiro", "Roteiro"]],
+  produce: [["cenas", "Planejando cenas"], ["midia", "Imagens e vídeos"], ["narracao", "Narração"], ["render", "Animação"], ["final", "Finalização"]],
+};
+
+function renderSteps(p) {
+  const pr = p.progress, el = $("steps");
+  if (!BUSY.includes(p.status) || !pr || !STEPS[pr.task]) { el.innerHTML = ""; return; }
+  const steps = STEPS[pr.task];
+  const cur = steps.findIndex(([k]) => k === pr.step);
+  const pct = pr.frac == null ? null : Math.round(pr.frac * 100);
+  // tempo restante da etapa, estimado pelo ritmo até agora
+  const elapsed = Date.now() / 1000 - pr.since;
+  let eta = "";
+  if (pr.frac >= 0.05 && pr.frac < 1 && elapsed > 15) {
+    const left = elapsed * (1 - pr.frac) / pr.frac;
+    eta = left < 60 ? " · menos de 1 min" : ` · ~${Math.round(left / 60)} min restantes`;
+  }
+  el.innerHTML = `
+    <ol>${steps.map(([, label], i) => `<li class="${i < cur ? "done" : i === cur ? "now" : ""}">${i < cur ? "✓ " : ""}${label}</li>`).join("")}</ol>
+    <div class="meta"><span>${cur >= 0 ? esc(steps[cur][1]) : "Começando"}${pr.detail ? " · " + esc(pr.detail) : ""}</span><span>${pct != null ? pct + "%" : ""}${eta}</span></div>
+    <div class="progress"><i style="width:${pct ?? 0}%"></i></div>`;
+}
+
+function renderResult(p) {
+  const r = p.result;
+  if (!r) { $("result").innerHTML = ""; renderedResult = null; return; }
+  const key = r.file + r.duration;
+  if (renderedResult !== key) {
+    renderedResult = key;
+    const src = `/output/${p.id}/${encodeURIComponent(r.file)}?v=${Math.round(r.duration)}`;
+    $("result").innerHTML = `
+      <div style="display:grid; gap:10px">
+        <video controls preload="metadata" src="${src}" style="${p.format === "vertical" ? "max-width:420px" : ""}"></video>
+        ${r.thumbnail ? `<img src="/output/${p.id}/${r.thumbnail}?v=${Math.round(r.duration)}" alt="Miniatura" style="width:100%; max-width:480px; border-radius:10px; display:block">` : ""}
+        <div class="actions"><a href="${src}" download="${esc(r.title)}.mp4">Baixar vídeo</a>${r.thumbnail ? ` <a href="/output/${p.id}/${r.thumbnail}" download="${esc(r.title)}.jpg">Baixar miniatura</a>` : ""}</div>
+        <div class="publish" style="display:grid; gap:6px">
+          <label>Título no YouTube <input id="upTitle" maxlength="100" value="${esc(r.title)}"></label>
+          <label>Descrição <textarea id="upDesc" rows="6">${esc(r.description)}</textarea></label>
+          <button type="button" id="upBtn">Publicar no YouTube</button>
+          <div id="upState"></div>
+        </div>
+      </div>`;
+    $("upBtn").onclick = publish;
+  }
+  const u = p.uploads || {};
+  const st = $("upState");
+  $("upBtn").disabled = ["queued", "uploading", "done"].includes(u.state) || !ytConnected;
+  if (u.state === "done") st.innerHTML = `<p class="up">Publicado: <a href="${u.url}" target="_blank">${u.url}</a></p>`;
+  else if (u.state === "error") { st.innerHTML = `<p class="up err">Erro no envio: ${esc(u.error)}</p>`; $("upBtn").disabled = !ytConnected; }
+  else if (u.state) st.innerHTML = `<p class="up">${u.state === "queued" ? "Na fila de envio..." : `Enviando ${u.progress}%`}</p><div class="progress"><i style="width:${u.progress}%"></i></div>`;
+  else st.innerHTML = ytConnected ? "" : '<p class="up">Conecte o YouTube no topo da página para publicar.</p>';
+}
+
+async function publish() {
+  try {
+    await api("/api/youtube/upload", { method: "POST", body: JSON.stringify({ project_id: current, title: $("upTitle").value, description: $("upDesc").value }) });
+    poll();
+  } catch (err) { alert(err.message); }
+}
+
+async function saveEdits() {
+  await api(`/api/projects/${current}`, { method: "PUT", body: JSON.stringify({
+    script: $("script").value, voice: $("dVoice").value, format: $("dFormat").value, captions: $("dCaptions").checked }) });
+  dirty = false;
+}
+["script", "dVoice", "dFormat", "dCaptions"].forEach(k => $(k).addEventListener("input", () => dirty = true));
+$("save").onclick = async () => { try { await saveEdits(); clearTimeout(timer); poll(); } catch (err) { alert(err.message); } };
+$("produce").onclick = async () => {
+  try {
+    if (dirty) await saveEdits();
+    await api(`/api/projects/${current}/produce`, { method: "POST" });
+    clearTimeout(timer); poll();
+  } catch (err) { alert(err.message); }
+};
+$("rewrite").onclick = async () => {
+  if (!confirm("Reescrever o roteiro do zero? O texto atual será substituído.")) return;
+  try { dirty = false; await api(`/api/projects/${current}/rewrite`, { method: "POST" }); clearTimeout(timer); poll(); } catch (err) { alert(err.message); }
+};
+$("del").onclick = async () => {
+  if (!confirm("Apagar este projeto e todos os arquivos dele?")) return;
+  try {
+    await api(`/api/projects/${current}`, { method: "DELETE" });
+    current = null; dirty = false; $("detail").style.display = "none"; loadList();
+  } catch (err) { alert(err.message); }
+};
+
+// ---------------------------------------------------------------- recursos e configurações
+async function loadResources() {
+  const r = await api("/api/resources");
+  const opts = '<option value="">Padrão do Chatterbox</option>' + r.voices.map(v => `<option>${esc(v)}</option>`).join("");
+  $("voice").innerHTML = $("dVoice").innerHTML = opts;
+  if (project && !dirty) $("dVoice").value = project.voice || "";
+  $("pexels").placeholder = r.pexels ? "(configurada)" : "(não configurada)";
+  $("pixabay").placeholder = r.pixabay ? "(configurada)" : "(não configurada)";
+  const parts = [r.pexels && "Pexels", r.pixabay && "Pixabay"].filter(Boolean);
+  $("cfgSummary").textContent = `Configurações · imagens: Wikimedia${parts.length ? " + " + parts.join(" + ") : " (sem chaves de vídeo)"} · ${r.voices.length} voz(es) · ${r.clips.length} clipe(s)`;
+}
+$("saveKeys").onclick = async () => {
+  const body = {};
+  if ($("pexels").value.trim()) body.pexels_key = $("pexels").value.trim();
+  if ($("pixabay").value.trim()) body.pixabay_key = $("pixabay").value.trim();
+  await api("/api/settings", { method: "PUT", body: JSON.stringify(body) });
+  $("pexels").value = $("pixabay").value = "";
+  loadResources();
+};
+
+// ---------------------------------------------------------------- YouTube
+let ytConnected = false, ytTimer;
+async function ytStatus() {
+  const s = await api("/api/youtube/status");
   ytConnected = !!s.connected;
-  $("ytDot").className = "dot" + (s.connected ? " on" : "");
   const btn = $("ytBtn");
+  $("ytDot").classList.toggle("on", ytConnected);
   btn.style.display = "";
   btn.className = "";
   if (!s.configured) {
-    $("ytText").textContent = "YouTube não configurado: coloque o client_secret.json na pasta do projeto (veja o README).";
+    $("ytText").textContent = "YouTube não configurado: salve o client_secret.json na pasta do projeto (veja o README).";
     btn.style.display = "none";
   } else if (s.login_running) {
-    $("ytText").textContent = "Autorize o acesso na aba do Google que foi aberta...";
+    $("ytText").innerHTML = '<i class="spinner"></i>Autorize no navegador que abriu...';
     btn.style.display = "none";
-    setTimeout(ytRefresh, 2000);
-  } else if (s.connected) {
-    $("ytText").innerHTML = `YouTube conectado: <b>${esc(s.channel)}</b>`;
+    clearTimeout(ytTimer); ytTimer = setTimeout(ytStatus, 2000);
+  } else if (ytConnected) {
+    $("ytText").textContent = `YouTube conectado: ${s.channel}`;
     btn.textContent = "Desconectar"; btn.className = "ghost";
-    btn.onclick = async () => { await fetch("/api/youtube/logout", { method: "POST" }); ytRefresh(); };
+    btn.onclick = async () => { await api("/api/youtube/logout", { method: "POST" }); ytStatus(); };
   } else {
-    $("ytText").textContent = s.login_error ? `Falha ao conectar: ${s.login_error}` : "YouTube não conectado.";
+    $("ytText").textContent = s.login_error ? `Falha ao conectar: ${s.login_error}` : "YouTube desconectado.";
     btn.textContent = "Conectar YouTube";
-    btn.onclick = async () => { await fetch("/api/youtube/login", { method: "POST" }); setTimeout(ytRefresh, 800); };
+    btn.onclick = async () => { await api("/api/youtube/login", { method: "POST" }); setTimeout(ytStatus, 1000); };
   }
-  document.querySelectorAll(".publish button").forEach(b => b.disabled = !ytConnected || b.dataset.sent === "1");
-}
-ytRefresh();
-
-// ------------------------------------------------------------------ armazenamento
-function fmtBytes(b) {
-  return b >= 1e9 ? `${(b / 1e9).toFixed(1)} GB` : `${Math.round(b / 1e6)} MB`;
 }
 
-async function stRefresh() {
-  const s = await fetch("/api/storage").then(r => r.json()).catch(() => null);
-  if (!s) return;
-  $("stText").textContent = s.jobs
-    ? `${s.jobs} pasta(s) na pasta output · ${fmtBytes(s.bytes)} (vídeos originais + cortes)`
-    : "Nenhum arquivo salvo na pasta output.";
-  $("stBtn").disabled = !s.jobs;
-}
-stRefresh();
-
-$("stBtn").onclick = async () => {
-  if (!confirm("Apagar TODOS os vídeos baixados e cortes da pasta output? Isso não pode ser desfeito.")) return;
-  $("stBtn").disabled = true;
-  const r = await fetch("/api/output", { method: "DELETE" }).then(r => r.json()).catch(() => null);
-  if (r) {
-    let msg = `${r.deleted} pasta(s) apagada(s).`;
-    if (r.skipped) msg += ` ${r.skipped} em andamento foi(ram) mantida(s).`;
-    if (r.failed.length) msg += ` ${r.failed.length} não pôde(puderam) ser apagada(s) (arquivo aberto em outro programa).`;
-    alert(msg);
-    if (currentJob && !["queued", "running"].includes(currentJob.status)) {
-      $("clips").innerHTML = ""; rendered = null;
-    }
-  }
-  stRefresh();
-};
-
-async function publish(i) {
-  const c = currentJob.clips[i];
-  const body = {
-    job_id: currentJob.id, file: c.file,
-    title: $(`t${i}`).value, description: $(`d${i}`).value,
-  };
-  const r = await fetch("/api/youtube/upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  if (!r.ok) { const e = await r.json(); $(`u${i}`).className = "up err"; $(`u${i}`).textContent = e.detail; return; }
-  poll(currentJob.id);
-}
-
-function renderUploads(job) {
-  job.clips.forEach((c, i) => {
-    const u = (job.uploads || {})[c.file], el = $(`u${i}`), btn = $(`b${i}`);
-    if (!u || !el) return;
-    btn.dataset.sent = u.state === "error" ? "0" : "1";
-    btn.disabled = !ytConnected || btn.dataset.sent === "1";
-    el.className = "up" + (u.state === "error" ? " err" : "");
-    el.innerHTML = {
-      queued: "Na fila de envio...",
-      uploading: `Enviando ${u.progress}% <div class="bar"><i style="width:${u.progress}%"></i></div>`,
-      done: `Publicado: <a href="${esc(u.url)}" target="_blank">${esc(u.url)}</a>`,
-      error: `Erro: ${esc(u.error)}`,
-    }[u.state] || "";
-  });
-}
-
-function esc(s) { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML.replace(/"/g, "&quot;"); }
-function mmss(t) { t = Math.floor(t); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`; }
-
-function render(job) {
-  const labels = { queued: "Na fila", running: "Processando", done: "Concluído", error: "Falhou" };
-  const busy = job.status === "queued" || job.status === "running";
-  $("state").innerHTML = (busy ? '<span class="spinner"></span>' : "") + (labels[job.status] || "");
-  $("log").innerHTML = job.log.map(l => `<div class="${l.includes("ERRO") ? "err" : ""}">${esc(l)}</div>`).join("");
-  $("log").scrollTop = $("log").scrollHeight;
-  if (job.status !== "done") return;
-  if (rendered !== job.id) {  // monta os cards uma vez só, para não apagar o que foi editado
-    rendered = job.id;
-    $("clips").innerHTML = job.clips.map((c, i) => `
-    <article class="clip">
-      <video src="/output/${job.id}/${c.file}" controls preload="metadata" playsinline></video>
-      <div class="body">
-        <input id="t${i}" value="${esc(c.title)}" maxlength="100" title="Título no YouTube">
-        <div class="meta">${mmss(c.start)} – ${mmss(c.end)} · ${Math.round(c.end - c.start)}s · nota ${c.score}</div>
-        <div class="meta">${esc(c.reason)}</div>
-        <textarea id="d${i}" title="Descrição no YouTube">${esc(c.description)}</textarea>
-        <div class="actions">
-          <a href="/api/download/${job.id}/${c.file}">Baixar</a>
-        </div>
-        <div class="publish">
-          <button type="button" id="b${i}" onclick="publish(${i})" ${ytConnected ? "" : "disabled"}>Publicar no YouTube</button>
-          <div class="up" id="u${i}"></div>
-        </div>
-      </div>
-    </article>`).join("");
-  }
-  renderUploads(job);
-}
+loadResources();
+loadList();
+ytStatus();
 </script>
 </body>
 </html>

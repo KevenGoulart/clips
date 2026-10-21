@@ -4,3 +4,10 @@ models/
 __pycache__/
 client_secret*.json
 youtube_token.json
+cookies.txt
+settings.json
+.venv-tts/
+motion/node_modules/
+vozes/
+musica/
+clipes/
